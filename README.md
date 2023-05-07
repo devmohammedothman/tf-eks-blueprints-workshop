@@ -7,3 +7,5 @@ It will enable multiple development teams at your organization to deploy workloa
 Acting as the Development Team, we then deploy a static website via GitOps using ArgoCD.
 
 https://catalog.workshops.aws/eks-blueprints-terraform/en-US
+
+![/imgs/eks_cluster_1.svg](/imgs/eks_cluster_1.svg)
