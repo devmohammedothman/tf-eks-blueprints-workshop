@@ -1,18 +1,3 @@
-data "aws_availability_zones" "available" {}
-
-data "aws_eks_cluster" "cluster" {
-  name = module.eks_blueprints.eks_cluster_id
-}
-
-data "aws_eks_cluster_auth" "this" {
-  name = module.eks_blueprints.eks_cluster_id
-}
-
-# To Authenticate with ECR Public in eu-east-1
-data "aws_ecrpublic_authorization_token" "token" {
-  provider = aws.virginia
-}
-
 
 # Required for public ECR where Karpenter artifacts are hosted
 provider "aws" {
@@ -43,20 +28,6 @@ provider "kubectl" {
 }
 
 
-locals {
-
-  name     = "eks-blp-ws"
-  vpc_cidr = "182.31.0.0/16"
-  azs      = slice(data.aws_availability_zones.available.names, 0, 3)
-  
-  
-  cluster_version = "1.23"
-  node_group_name = "eks-ws-grp1"
-
-  tags = {
-    Blueprint = "EKS Blueprint Workshop"
-  }
-}
 
 
 module "vpc" {
@@ -146,6 +117,44 @@ module "eks_blueprints" {
       min_size     = 1
     }
   }
+
+
+  // Adding the platform team definition 
+  platform_teams = {
+    admin = {
+      users = [
+        data.aws_caller_identity.current.arn
+      ]
+    }
+  }
+
+  // Adding Software team, with limited access and resource defintion
+  application_teams = {
+    backend-team = {
+      "labels" = {
+        "appName"     = "backend-team-app",
+        "projectName" = "project-riker",
+        "environment" = "dev",
+        "domain"      = "example",
+        "uuid"        = "example",
+        "billingCode" = "example",
+        "branch"      = "example"
+      }
+      "quota" = {
+        "requests.cpu"    = "10",
+        "requests.memory" = "20Gi",
+        "limits.cpu"      = "30",
+        "limits.memory"   = "50Gi",
+        "pods"            = "15",
+        "secrets"         = "10",
+        "services"        = "10"
+      }
+      ## Manifests Example: we can specify a directory with kubernetes manifests that can be automatically applied in the backend-team namespace.
+      manifests_dir = "./teams/backend-team"
+      users         = [data.aws_caller_identity.current.arn]
+    }
+  }
+
 
   tags = local.tags
 }
