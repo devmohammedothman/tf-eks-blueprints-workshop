@@ -16,6 +16,7 @@ provider "helm" {
     host                   = module.eks_blueprints.eks_cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks_blueprints.eks_cluster_certificate_authority_data)
     token                  = data.aws_eks_cluster_auth.this.token
+    insecure               = "false"
   }
 }
 
@@ -82,16 +83,7 @@ module "eks_blueprints" {
   # EKS CONTROL PLANE VARIABLES
   cluster_version = local.cluster_version
 
-  # List of Additional roles admin in the cluster
-  # Comment this section if you ARE NOT at an AWS Event, as the TeamRole won't exist on your site, or replace with any valid role you want
-  /* map_roles = [
-    {
-      rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/TeamRole"
-      username = "ops-role"         # The user name within Kubernetes to map to the IAM role
-      groups   = ["system:masters"] # A list of groups within Kubernetes to which the role is mapped; Checkout K8s Role and Rolebindings
-    }
-  ] */
-
+  
   map_users = [
     {
       userarn  = "arn:aws:iam::442320836329:user/mothman"
@@ -152,6 +144,7 @@ module "eks_blueprints" {
       ## Manifests Example: we can specify a directory with kubernetes manifests that can be automatically applied in the backend-team namespace.
       manifests_dir = "./teams/backend-team"
       users         = [data.aws_caller_identity.current.arn]
+      finalizers    = null
     }
   }
 
